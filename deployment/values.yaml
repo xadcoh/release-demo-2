@@ -1,0 +1,118 @@
+---
+k8s_objects:
+  podDisruptionBudget: false
+  networkPolicy: false
+  ingress: true
+  configMap: true
+
+replicaCount:
+  local: 1
+  dev: 1
+  prod: 1
+
+podDisruptionBudget:
+  minAvailable: 1
+
+podAntiAffinity:
+  local: false
+  dev: false
+  prod: false
+
+deployment:
+  port: 8080
+  livenessProbe:
+    initialDelaySeconds: 5
+    timeoutSeconds: 2
+  readinessProbe:
+    initialDelaySeconds: 5
+    timeoutSeconds: 2
+
+pullSecret:
+pullPolicy: Always
+
+# image:
+#   repository: http://nexus.kanaridi.com:5000/image-name
+#   tag: development
+#   pullPolicy: Always
+#   pullSecret:
+
+ingress_annotations:
+  - 'kubernetes.io/ingress.class: nginx'
+  #- 'nginx.ingress.kubernetes.io/auth-url: "https://$host/oauth2/auth"'
+  #- 'nginx.ingress.kubernetes.io/auth-signin: "https://$host/oauth2/start?rd=$escaped_request_uri"'
+
+configmap:
+  filename:
+    dev:
+    - default.conf
+    local:
+    - default.conf
+
+env:
+  local:
+  dev:
+  prod:
+
+nameOverride: ""
+fullnameOverride: ""
+
+service:
+  local:
+    type: "NodePort"
+    port: 80
+    targetPort: 8080
+    nodePort: 31112
+  dev:
+    type: "ClusterIP"
+    port: 80
+    targetPort: 8080
+  prod:
+    type: "ClusterIP"
+    port: 80
+    targetPort: 8080
+
+ingress:
+  local:
+    - fqdn: 
+      tls_secretname: 
+      locations:
+        - path: "/"
+          port: 80
+  dev:
+    - fqdn: "dev.kanaridi.com"
+      tls_secretname: dev-kanaridi-com
+      locations:
+        - path: "/release-demo-2"
+          port: 80
+  prod:
+    - fqdn: "prod.kanaridi.com"
+      tls_secretname: prod-kanaridi-com
+      locations:
+        - path: "/release-demo-2"
+          port: 80
+
+resources:
+  requests:
+    memory:
+      local: 128Mi
+      dev: 256Mi
+      prod: 256Mi
+    cpu:
+      local: 100m
+      dev: 250m
+      prod: 250m
+  limits:
+    memory:
+      local: 2048Mi
+      dev: 2048Mi
+      prod: 2048Mi
+    cpu:
+      local: 2000m
+      dev: 2000m
+      prod: 2000m
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}

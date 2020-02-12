@@ -1,0 +1,41 @@
+{{ if .Values.k8s_objects.ingress }}
+{{- $fullName := include "client-app.fullname" . -}}
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  {{- if .Values.ingress_annotations }}
+  annotations:
+    {{- range .Values.ingress_annotations }}
+    {{ . }}
+    {{- end }}
+  {{- end }}
+  name: {{ $fullName }}
+  labels:
+    app.kubernetes.io/name: {{ include "client-app.name" . }}
+    helm.sh/chart: {{ .Chart.Name }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+spec:
+  rules:
+  {{- range pluck $.Values.global.env .Values.ingress | first }}
+  - http:
+      paths:
+      {{- range .locations }}
+      - backend:
+          serviceName: {{ $fullName }}
+          servicePort: {{ .port }}
+        path: {{ .path }}
+      {{- end }}
+    {{ if .fqdn }}
+    host: {{ .fqdn }}
+    {{ end }}
+  {{- end }}
+  tls:
+  {{- range pluck $.Values.global.env .Values.ingress | first }}
+  {{- if .fqdn }}
+  - hosts: 
+    - {{ .fqdn }}
+    secretName: {{ .tls_secretname }}
+  {{- end }}
+  {{- end }}
+{{ end }}
